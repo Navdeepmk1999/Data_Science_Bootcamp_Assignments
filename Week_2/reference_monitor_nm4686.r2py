@@ -1,0 +1,80 @@
+"""
+NetID: nm4686
+"""
+
+TYPE="type"
+ARGS="args"
+RETURN="return"
+EXCP="exceptions"
+TARGET="target"
+FUNC="func"
+OBJC="objc"
+
+class ABFile():
+  def __init__(self, filename, create):
+    self.Afn = filename + '.a'
+    self.Bfn = filename + '.b'
+
+    if create:
+
+      self.Afile = openfile(self.Afn, True)
+      self.Bfile = openfile(self.Bfn, True)
+
+      self.Afile.writeat('SE', 0)
+    else:
+
+      self.Afile = openfile(self.Afn, False)
+      self.Bfile = openfile(self.Bfn, False)
+
+  def writeat(self, data, offset):
+
+    return self.Bfile.writeat(data, offset)
+
+  def readat(self, bytes, offset):
+
+    return self.Afile.readat(bytes, offset)
+
+  def close(self):
+   
+    b_content = ""
+    try:
+
+      b_content = self.Bfile.readat(None, 0)
+    except:
+
+      pass
+
+    is_valid = False
+    
+    if len(b_content) >= 2:
+
+      if b_content[0] == 'S' and b_content[-1] == 'E':
+        is_valid = True
+    
+    self.Afile.close()
+    self.Bfile.close()
+
+    if is_valid:
+
+      a_file_handle = openfile(self.Afn, False)
+      a_file_handle.writeat(b_content, 0)
+      a_file_handle.close()
+
+    if self.Bfn in listfiles():
+        removefile(self.Bfn)
+
+def ABopenfile(filename, create):
+
+  return ABFile(filename, create)
+
+sec_file_def = {"obj-type":ABFile,
+                "name":"ABFile",
+                "writeat":{"type":"func","args":(str,int),"exceptions":Exception,"return":(type(None)),"target":ABFile.writeat},
+                "readat":{"type":"func","args":((int,type(None)),int),"exceptions":Exception,"return":str,"target":ABFile.readat},
+                "close":{"type":"func","args":None,"exceptions":None,"return":type(None),"target":ABFile.close}
+           }
+
+CHILD_CONTEXT_DEF["ABopenfile"] = {TYPE:OBJC,ARGS:(str,bool),EXCP:Exception,RETURN:sec_file_def,TARGET:ABopenfile}
+
+
+secure_dispatch_module()
